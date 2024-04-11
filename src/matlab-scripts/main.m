@@ -1,20 +1,25 @@
-% This main file has both the init and term conditions and both can be toggled.
-%% 
+%% Step 1: Verify you are using the right version of MATLAB
+version_devel = "R2023b";
+version_current = strcat("R", version('-release'));
+if (version_current ~= version_devel)
+    warning("This code was developed in %s, you are using %s. Proceed with caution", version_devel, version_current)
+end
+%% Step 2: Ensure you are in the right directory
 cd(fileparts(matlab.desktop.editor.getActiveFilename));
-%% 
+%% Step 3: Clear system states from previous sessions
 try
     uno.close;
 end
 clear all;
 clc;
-[uno, uno_connected] = connect_board();
-%% 
-uno.getRecentEMG
-%% 
+%% Step 4: Connect the Arduino
+[uno, uno_connected] = connect_board(); 
+%% Step 5: Initialize and instance of the app and connect it to the Arduino
 fs = 1e3; %[Hz]
 tc_app = TCApp;
 %tc.appCalibrateButton.Color = 'white';
 tc_app.DataLogger = uno;
+uno.getEMG
 %%
 calibration_data = tc_app.CalibrationData(1,:);
 mav_thresh = compute_threshold(calibration_data');
