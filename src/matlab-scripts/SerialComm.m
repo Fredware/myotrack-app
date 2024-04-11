@@ -74,7 +74,7 @@ classdef SerialComm < handle
                 end
             end
             delete(instrfind('port',obj.COM_ID));
-            obj.ARD = serialport(obj.COM_ID, 250000, 'Timeout',1); %_____Baud Rate______
+            obj.ARD = serialport(obj.COM_ID, 115200, 'Timeout',1); %_____Baud Rate______
             configureCallback(obj.ARD,"terminator",@obj.read);
             flush(obj.ARD);
             pause(0.1);
@@ -102,8 +102,8 @@ classdef SerialComm < handle
                 obj.Count = obj.Count + 1;
             catch e
                 disp('Serial communication error!')
-                fprintf(1,'The identifier was:\n%s',e.identifier);
-                fprintf(1,'There was an error! The message was:\n%s',e.message);
+                fprintf(1,'\tThe identifier was:\n\t%s\n',e.identifier);
+                fprintf(1,'\tThere was an error! The message was:\n\t%s\n',e.message);
             end
         end
         

@@ -4,31 +4,36 @@ version_current = strcat("R", version('-release'));
 if (version_current ~= version_devel)
     warning("This code was developed in %s, you are using %s. Proceed with caution", version_devel, version_current)
 end
+
 %% Step 2: Ensure you are in the right directory
 cd(fileparts(matlab.desktop.editor.getActiveFilename));
+
 %% Step 3: Clear system states from previous sessions
 try
+    delete(tc_app);
     uno.close;
+catch
+    disp("Nothing to clear.")
 end
-clear all;
-clc;
+clear all; clc;
+
 %% Step 4: Connect the Arduino
-[uno, uno_connected] = connect_board(); 
-%% Step 5: Initialize and instance of the app and connect it to the Arduino
+[uno, uno_connected] = connect_board();
+
+%% Step 5: Initialize an instance of the app and connect it to the Arduino
 fs = 1e3; %[Hz]
 tc_app = TCApp;
 %tc.appCalibrateButton.Color = 'white';
 tc_app.DataLogger = uno;
-uno.getEMG
-%%
-calibration_data = tc_app.CalibrationData(1,:);
-mav_thresh = compute_threshold(calibration_data');
+% uno.getEMG
 
+%% Step 6: After clicking the calibration button, compute a threshold.
 calibration_data = tc_app.CalibrationData(1,:);
 [mav_thresh, mav_data] = compute_threshold(calibration_data');
 
 [numRows, numCols] = size(mav_data);
-%%
+
+%% Step 7: Validate the threshold calculation
 calibrationPlot = figure;
 plot(calibration_data, 'k:');
 hold on
@@ -37,13 +42,12 @@ yline(mav_thresh,'Color', 'r', 'LineWidth', 3, 'LineStyle', '-.');
 hold off
 legend(["","", sprintf("%0.3f", mav_thresh)])
 
-%%
+%% Step 8: Run the app (stops automatically after 10 trials)
 if(tc_app.threshold ~= 0)
     mav_thresh = tc_app.threshold;
 end
 
 %mav_Buff = dsp.AsyncBuffer;
-
 tc_init_buff = [0,0,0];
 tc_term_buff = [0,0,0];
 
@@ -61,7 +65,7 @@ tc_term_idx = 1;
 if(tc_app.PracticeCheckBox.Value == 1)
     trial_count_limit = 6;
 else
-    trial_count_limit = 10;
+    trial_count_limit = 10; % Change this value for the demo
 end
 
 tc_init_arr = nan(1,2*trial_count_limit);
@@ -69,16 +73,11 @@ tc_term_arr = nan(1,2*trial_count_limit);
 
 min_event_len = 0.5*fs;
 
-
 line_handles = cell(1, n_lines);
-
-
-line_handles{1} = animatedline(tc_app.UIAxes_mav, 'Color', 'b', 'LineWidth', 1);
+line_handles{1} = animatedline(tc_app.UIAxes_mav, 'Color', 'b', 'LineWidth', 1.5);
 line_handles{2} = animatedline(tc_app.UIAxes_mav, 'Color', 'r', 'LineWidth', 2.5, 'LineStyle', '-');
 line_handles{3} = animatedline(tc_app.UIAxes, 'Color', '#23E8DB', 'LineWidth', 3.5);
 line_handles{4} = animatedline(tc_app.UIAxes, 'Color', '#FF00BD', 'LineWidth', 3.5);
-
-
 
 animated_lines = line_handles;
 
@@ -187,7 +186,7 @@ while( tc_app.RecordSession && trialCount < trial_count_limit)
         elseif state == STOP_DETECTED
             if (timestamp - t_stop) > event_padding/fs
                 state = MONITORING_MAV;
-                event_data = data(event_start-event_padding:event_stop);
+                event_data = data(1, event_start-event_padding:event_stop);
                 if(length(event_data) > min_event_len)
                     event_mav = compute_running_mav(event_data, mav_win_len);
 
@@ -258,11 +257,11 @@ if(tc_app.PracticeCheckBox.Value == 1)
     experiment_task = 'Practice';
 
 elseif(tc_app.FeedbackButton == tc_app.FeedbackTypeButtonGroup.SelectedObject)
-        if(tc_app.PareticButton == tc_app.PatientConditionButtonGroup.SelectedObject)
-            experiment_task = 'Feedback_Paretic';
-        else
-            experiment_task = 'Feedback_NonParetic';
-        end
+    if(tc_app.PareticButton == tc_app.PatientConditionButtonGroup.SelectedObject)
+        experiment_task = 'Feedback_Paretic';
+    else
+        experiment_task = 'Feedback_NonParetic';
+    end
 else
     if(tc_app.NoFeedbackButton == tc_app.FeedbackTypeButtonGroup.SelectedObject)
         if(tc_app.PareticButton == tc_app.PatientConditionButtonGroup.SelectedObject)
@@ -272,7 +271,7 @@ else
         end
     end
 end
-%% 
+%%
 
 filename = sprintf("%s %s.mat",file_str, experiment_task);
 figname = sprintf("%s.fig", file_str);

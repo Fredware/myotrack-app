@@ -91,8 +91,8 @@ exit_success = 1;
        try
         Idxs2InitX = [IdxMAVInitX(1) - 1, IdxMAVInitX(1)];
        catch e
-        fprintf(1,'The identifier was:\n%s',e.identifier);
-        fprintf(1,'There was an error! The message was:\n%s',e.message);
+        fprintf(1,'The identifier was:\n%s\n',e.identifier);
+        fprintf(1,'There was an error! The message was:\n%s\n',e.message);
        end
 
         %Find indices before and after the last time crossing the Termination MAV
